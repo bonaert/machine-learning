@@ -1,4 +1,5 @@
-from src.findS import FindS
+from findS import Special, Label, hypothesisRespectsExample, mostRestrictiveHypothesis
+from unittest import TestCase
 from enum import Enum
 
 
@@ -27,14 +28,6 @@ class Forecast(Enum):
     SAME = 0
     CHANGE = 1
 
-class Label(Enum):
-    NO = 0
-    YES = 1
-
-class Special(Enum):
-    NONE = 0
-    ANY = 1
-
 
 data = [
     [Sky.SUNNY, Temp.WARM, Humid.NORMAL, Wind.STRONG, Water.WARM, Forecast.SAME, Label.YES],
@@ -47,7 +40,11 @@ RESTRICTIVE_HYPOTHESIS = [
     Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY
 ]
 
-assert mostRestrictiveHypothesis(data) == RESTRICTIVE_HYPOTHESIS
+restr = mostRestrictiveHypothesis(data)
+assert restr == RESTRICTIVE_HYPOTHESIS
+        
+for example in data:
+    assert hypothesisRespectsExample(RESTRICTIVE_HYPOTHESIS, example)
 
 #assert mostGeneralHypothesis(data) == GENERAL_HYPOTHESIS
 #assert fetchAllHypothesis(data) == ALL_HYPOTHESES
