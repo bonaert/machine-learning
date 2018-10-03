@@ -1,4 +1,4 @@
-from findS import Special, Label, hypothesisRespectsExample, mostRestrictiveHypothesis
+from findS import Special, Label, hypothesisRespectsExample, mostRestrictiveHypothesis, fetchAllHypothesis, makeGeneralizations, makeSpecializations
 from unittest import TestCase
 from enum import Enum
 
@@ -40,11 +40,35 @@ RESTRICTIVE_HYPOTHESIS = [
     Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY
 ]
 
+GENERAL_HYPOTHESIS = [
+    [Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Special.ANY],
+    [Special.ANY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY],
+]
+
+INTERMEDIATE_HYPOTHESIS = [
+   [Sky.SUNNY, Special.ANY, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
+    [Sky.SUNNY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY],
+    [Special.ANY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
+]
+
+ALL_HYPOTHESES = [RESTRICTIVE_HYPOTHESIS] + GENERAL_HYPOTHESIS + INTERMEDIATE_HYPOTHESIS
+
 restr = mostRestrictiveHypothesis(data)
 assert restr == RESTRICTIVE_HYPOTHESIS
         
 for example in data:
     assert hypothesisRespectsExample(RESTRICTIVE_HYPOTHESIS, example)
+
+
+assert makeGeneralizations([Temp.WARM, Wind.STRONG], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Wind.STRONG]
+assert makeGeneralizations([Temp.WARM, Wind.NORMAL], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Special.ANY]
+assert makeGeneralizations([Special.NONE, Special.NONE], [Temp.COLD, Wind.STRONG]) == [Temp.COLD, Wind.STRONG]
+assert makeGeneralizations([Special.ANY, Wind.NORMAL], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Special.ANY]
+assert makeGeneralizations([Special.ANY, Wind.NORMAL], [Temp.COLD, Wind.NORMAL]) == [Special.ANY, Wind.NORMAL]
+assert makeGeneralizations([Temp.COLD, Wind.NORMAL], [Temp.COLD, Wind.NORMAL]) == [Temp.COLD, Wind.NORMAL]
+
+
+
 
 #assert mostGeneralHypothesis(data) == GENERAL_HYPOTHESIS
 #assert fetchAllHypothesis(data) == ALL_HYPOTHESES
