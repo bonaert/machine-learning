@@ -12,6 +12,9 @@ class Label(Enum):
 class NoSolutionError(Exception):
     pass
 
+class LogicError(Exception):
+    pass
+
 
 def hypothesisRespectsExample(hypothesis, example):
     assert len(hypothesis) == len(example) - 1
@@ -53,6 +56,10 @@ def mostRestrictiveHypothesis(data):
 
 def makeGeneralizations(hyp, example):
     """
+    Given a hypothesis that is not coherent with the given (positive) example, returns
+    the smallest generalization of the hypothesis that is coherent with the (positive) example.
+
+    Examples:
     [Temp.WARM, Wind.STRONG], [Temp.COLD, Wind.STRONG]) -> [[Special.ANY, Wind.STRONG]]
     [Temp.WARM, Wind.NORMAL], [Temp.COLD, Wind.STRONG]) -> [[Special.ANY, Special.ANY]]
     [Special.NONE, Special.NONE], [Temp.COLD, Wind.STRONG]) -> [[Temp.COLD, Wind.STRONG]]
@@ -75,9 +82,72 @@ def makeGeneralizations(hyp, example):
     
     return newHyp
     
+def getOtherValuesInEnum(value):
+    """
+    Given a value V of an Enum X, returns all the other values in the Enum except V.
 
-def makeSpecializations(hyp, example):
-    pass
+    Example:
+    X = Enum([Cold, Hot, Normal])
+    V = Hot
+    returns [Cold, Normal]
+    """
+    enumClass = list(value.__class__)
+    return [x for x in enumClass if x != value]
+
+
+def makeSpecializations(hyp, incoherentExample):
+    """
+    Given a hypothesis H that is not coherent with a negative example, returns the (one or more)
+    smallest specialisations of H that are coherent with the negative example.
+
+    Examples:
+    [Special.ANY, Special.ANY], [Temp.COLD, Wind.NORMAL]) -> [
+        [Special.ANY, Wind.STRONG],
+        [Temp.WARM, Special.ANY]
+    ]
+
+    [Temp.WARM, Special.ANY], [Temp.WARM, Wind.NORMAL] -> [
+        [Temp.WARM, Wind.STRONG]
+    ]
+
+    [Temp.WARM, Special.ANY, Water.COOL], [Temp.WARM, Wind.NORMAL, Water.COOL] -> [
+        [Temp.WARM, Wind.STRONG, Water.COOL]
+    ]
+
+    [Special.ANY, Special.ANY, Water.COOL], [Temp.WARM, Wind.NORMAL, Water.COOL] -> [
+        [Special.ANY, Wind.STRONG, Water.COOL],
+        [Temp.COLD, Special.ANY, Water.COOL]
+    ]
+    """
+    newHypotheses = []
+    if Special.NONE in hyp:
+        raise LogicError("Cannot specialize the null hypothesis: %s" % hyp)
+
+    # For each Special.ANY attribute in the hypothesis corresponding 
+    # to an attribute X of value V (for example, X = Wind and V = Strong) in the negative example,
+    # we can put replace it by any value of X except V (V = Weak, V = Normal)
+    # We need the schema here!
+
+    for i in range(len(hyp)):  
+        hypValue, exampleValue = hyp[i], incoherentExample[i]
+        if hypValue == Special.ANY:
+            for otherValue in getOtherValuesInEnum(exampleValue):
+                newHypothesis = hyp[:]
+                newHypothesis[i] = otherValue
+                newHypotheses.append(newHypothesis)
+        elif hypValue != exampleValue: # We know hypValue is neither Special.NONE nor Special.ANY
+            raise LogicError("No need to generalize, the hypothesis %s is already incoherent with the example %s" % (hyp, example))
+            
+    
+    return newHypotheses
+
+
+
+
+
+
+
+    
 
 def existsMoreGeneralHypothesis(hyp, collection):
     pass

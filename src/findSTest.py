@@ -1,4 +1,4 @@
-from findS import Special, Label, hypothesisRespectsExample, mostRestrictiveHypothesis, fetchAllHypothesis, makeGeneralizations, makeSpecializations
+from findS import Special, Label, hypothesisRespectsExample, mostRestrictiveHypothesis, fetchAllHypothesis, makeGeneralizations, makeSpecializations, getOtherValuesInEnum
 from unittest import TestCase
 from enum import Enum
 
@@ -28,6 +28,9 @@ class Forecast(Enum):
     SAME = 0
     CHANGE = 1
 
+assert getOtherValuesInEnum(Forecast.SAME) == [Forecast.CHANGE]
+assert getOtherValuesInEnum(Forecast.CHANGE) == [Forecast.SAME]
+assert getOtherValuesInEnum(Sky.CLOUDY) == [Sky.SUNNY, Sky.RAINY]
 
 data = [
     [Sky.SUNNY, Temp.WARM, Humid.NORMAL, Wind.STRONG, Water.WARM, Forecast.SAME, Label.YES],
@@ -59,13 +62,34 @@ assert restr == RESTRICTIVE_HYPOTHESIS
 for example in data:
     assert hypothesisRespectsExample(RESTRICTIVE_HYPOTHESIS, example)
 
-
 assert makeGeneralizations([Temp.WARM, Wind.STRONG], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Wind.STRONG]
 assert makeGeneralizations([Temp.WARM, Wind.NORMAL], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Special.ANY]
 assert makeGeneralizations([Special.NONE, Special.NONE], [Temp.COLD, Wind.STRONG]) == [Temp.COLD, Wind.STRONG]
 assert makeGeneralizations([Special.ANY, Wind.NORMAL], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Special.ANY]
 assert makeGeneralizations([Special.ANY, Wind.NORMAL], [Temp.COLD, Wind.NORMAL]) == [Special.ANY, Wind.NORMAL]
 assert makeGeneralizations([Temp.COLD, Wind.NORMAL], [Temp.COLD, Wind.NORMAL]) == [Temp.COLD, Wind.NORMAL]
+
+
+# TODO: improve testing because the returned list might be in any order
+# I had to put the expected result in the right order for this to pass, and I shouldn't have to
+assert makeSpecializations([Special.ANY, Special.ANY], [Temp.COLD, Wind.NORMAL]) == [
+    [Temp.WARM, Special.ANY],
+    [Special.ANY, Wind.STRONG]
+]
+
+assert makeSpecializations([Temp.WARM, Special.ANY], [Temp.WARM, Wind.NORMAL]) == [
+    [Temp.WARM, Wind.STRONG]
+]
+
+assert makeSpecializations([Temp.WARM, Special.ANY, Water.COOL], [Temp.WARM, Wind.NORMAL, Water.COOL]) == [
+    [Temp.WARM, Wind.STRONG, Water.COOL]
+]
+
+assert makeSpecializations([Special.ANY, Special.ANY, Water.COOL], [Temp.WARM, Wind.NORMAL, Water.COOL]) == [
+    [Temp.COLD, Special.ANY, Water.COOL],
+    [Special.ANY, Wind.STRONG, Water.COOL]
+]
+
 
 
 
