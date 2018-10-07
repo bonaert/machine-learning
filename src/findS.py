@@ -16,7 +16,7 @@ class LogicError(Exception):
     pass
 
 
-def hypothesisRespectsExample(hypothesis, example):
+def hypothesIsCoherentWithExample(hypothesis, example):
     assert len(hypothesis) == len(example) - 1
     
     prediction = Label.YES
@@ -47,14 +47,14 @@ def mostRestrictiveHypothesis(data):
                     hypothesis[index] = exampleValue
                 elif hypothesisValue != Special.ANY and hypothesisValue != exampleValue:
                     hypothesis[index] = Special.ANY
-        elif label == Label.NO and not hypothesisRespectsExample(hypothesis, example):
+        elif label == Label.NO and not hypothesIsCoherentWithExample(hypothesis, example):
             raise NoSolutionError("When looking at %s with hypothesis %s" % (example, hypothesis))
             
     return hypothesis
 
 
 
-def makeGeneralizations(hyp, example):
+def makeGeneralization(hyp, example):
     """
     Given a hypothesis that is not coherent with the given (positive) example, returns
     the smallest generalization of the hypothesis that is coherent with the (positive) example.
@@ -143,23 +143,101 @@ def makeSpecializations(hyp, incoherentExample):
 
 
 
+def isNullHypothesis(hyp):
+    return any([x == Special.NONE for x in hyp])
 
-
-
-
+def isMoreGeneral(hyp1, hyp2):
+    assert len(hyp1) == len(hyp2)
     
+    oneAttributeIsMoreGeneral = False
+    for (val1, val2) in zip(hyp1, hyp2):
+        if val1 == Special.NONE and val2 == Special.NONE: # (None, None)
+            return False
+        elif val1 == val2: # (a, a) or (Any, Any)
+            continue
+        elif val2 == Special.NONE: # (a/Any, None)
+            oneAttributeIsMoreGeneral = True
+        elif val1 == Special.NONE: # (None, a/Any)
+            return False
+        elif val1 == Special.ANY:  # (Any, a)
+            oneAttributeIsMoreGeneral = True
+        else: # (a, Any)
+            return False
+            
+    return oneAttributeIsMoreGeneral
+
+def isMoreSpecific(hyp1, hyp2):
+
+    assert len(hyp1) == len(hyp2)
+
+    oneAttributeIsMoreSpecific = False
+    for (val1, val2) in zip(hyp1, hyp2):
+        if val2 == Special.NONE: # (X, None) 
+            return False # Impossible to more specific than the null hypothesis
+        elif val1 == val2: # (a, a) or (Any, Any)
+            continue
+        elif val1 == Special.NONE: # (None, a/Any)
+            oneAttributeIsMoreSpecific = True
+        elif val1 == Special.ANY:  # (Any, a)
+            return False
+        elif val2 == Special.ANY: # (a, Any)
+            oneAttributeIsMoreSpecific = True
+        else: # (a, b)
+            return False
+    
+    return oneAttributeIsMoreSpecific
 
 def existsMoreGeneralHypothesis(hyp, collection):
-    pass
+    return any((isMoreGeneral(x, hyp) for x in collection))
 
 def existsMoreSpecificHypothesis(hyp, collection):
-    pass
+    return any((isMoreSpecific(x, hyp) for x in collection))
+
+
 
 def removeTooGeneralHypothesis(collection):
-    pass
+    """
+    Remove from S any hypothesis that is more general than another hypothesis in S
+    """
+    result = []
+    for i in range(len(collection)):
+        isGood = True
+
+        for j in range(len(collection)):
+            if i == j:
+                pass
+            
+            if isMoreGeneral(collection[i], collection[j]):
+                isGood = False
+                break
+        
+        if isGood:
+            result.append(collection[i])
+    
+    return result
+            
+
 
 def removeTooSpecificHypothesis(collection):
-    pass
+    """
+    Remove from S any hypothesis that is more general than another hypothesis in S
+    """
+    result = []
+    for i in range(len(collection)):
+        isGood = True
+
+        for j in range(len(collection)):
+            if i == j:
+                pass
+            
+            if isMoreSpecific(collection[i], collection[j]):
+                isGood = False
+                break
+        
+        if isGood:
+            result.append(collection[i])
+    
+    return result
 
 
 def findSAndG(data):
@@ -170,30 +248,36 @@ def findSAndG(data):
         label = example[-1]
 
         if label == Label.YES:
-            G = [hyp for hyp in G if hypothesisRespectsExample(hyp, example)]
+            G = [hyp for hyp in G if hypothesIsCoherentWithExample(hyp, example)]
 
             newS = []
             for hyp in S:
-                if hypothesisRespectsExample(hyp, example):
+                if hypothesIsCoherentWithExample(hyp, example):
                     newS.append(hyp)
                     continue
                 
-                newS += [new for new in makeGeneralizations(hyp, example) if existMoreGeneralHypothesis(new, G)]
+                
+                generalization = makeGeneralization(hyp, example)
+                if existsMoreGeneralHypothesis(generalization, G):
+                    newS.append(generalization)
+                
 
+            # Remove from S any hypothesis that is more general than another hypothesis in S
             S = removeTooGeneralHypothesis(newS)
 
 
         else: # Label.NO
             
-            S = [hyp for hyp in S if hypothesisRespectsExample(hyp, example)]
+            S = [hyp for hyp in S if hypothesIsCoherentWithExample(hyp, example)]
 
             newG = []
             for hyp in G:
-                if hypothesisRespectsExample(hyp, example):
+                if hypothesIsCoherentWithExample(hyp, example):
                     newG.append(hyp)
                     continue
                 
-                newG += [new for new in makeSpecializations(hyp, example) if existMoreSpecificHypothesis(new, S)]
+
+                newG += [x for x in makeSpecializations(hyp, example) if existsMoreSpecificHypothesis(x, S)]
 
             G = removeTooSpecificHypothesis(newG)
     
