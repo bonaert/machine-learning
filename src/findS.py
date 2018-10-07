@@ -283,6 +283,47 @@ def findSAndG(data):
     
     return S, G
 
+def specializeNearS(hyp, S):
+    """
+    Given a hypothesis and a lower bound hypothesis S, we give all specializations of hyp 
+    towards S that can be made by changing a single element of the hypothesis
+    Note:  We suppoose that S isn't the null hypothesis, e.g. there are no Special.NONE in S
+    """
+
+    new = []
+    for i in range(len(hyp)):
+        hypValue, sValue = hyp[i], S[i]
+        
+        # Can specialize: (Any, a)
+        # Can't specialize: (Any, Any), (a, a)
+        if hypValue != sValue:
+            copy = hyp[:]
+            copy[i] = sValue
+            new.append(copy)
+    
+    return new
+            
+
+
+def createAllHypotheses(S, G):
+    """
+    Returns [S] + G + all hypothesis H such that S is more general than H and
+    there's a hypothesis in G that's more general than H
+    """
+    S = S[0] # TODO: fix this, currently S is treated like a collection, when it's in really a single hypothesis
+    solutions = set([tuple(S)])
+    toExplore = set(map(tuple, G))
+    while toExplore:
+        hyp = list(toExplore.pop())
+
+        solutions.add(tuple(hyp))
+
+        for specialization in specializeNearS(hyp, S):
+            if tuple(specialization) not in solutions:
+                toExplore.add(tuple(specialization))
+     
+    return [list(x) for x in solutions]
+
 
 def fetchAllHypothesis(data):
     S, G = findSAndG(data)

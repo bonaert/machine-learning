@@ -150,6 +150,18 @@ assert not isMoreSpecific([Temp.WARM, Wind.NORMAL], [Special.NONE, Special.ANY])
 S, G = findSAndG(data)
 assert S == [[Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY]]
 assert G == [[Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Special.ANY], [Special.ANY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY]]
-#assert mostGeneralHypothesis(data) == GENERAL_HYPOTHESIS
-#assert fetchAllHypothesis(data) == ALL_HYPOTHESES
-#assert makePrediction(hypotheses, newSituation) == PLAUSIBLE_PREDICTION
+
+sol = fetchAllHypothesis(data)
+
+for x in sol:
+    print(x)
+
+# The result is a permutation of
+#  [
+#    [Sky.SUNNY, Special.ANY, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
+#    [Special.ANY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY],
+#    [Sky.SUNNY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY],
+#    [Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
+#    [Special.ANY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
+#    [Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Special.ANY]
+#]
