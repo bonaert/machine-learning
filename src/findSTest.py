@@ -153,8 +153,8 @@ assert G == [[Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Spe
 
 sol = fetchAllHypothesis(data)
 
-for x in sol:
-    print(x)
+#for x in sol:
+#    print(x)
 
 # The result is a permutation of
 #  [
@@ -165,3 +165,23 @@ for x in sol:
 #    [Special.ANY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY],
 #    [Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Special.ANY]
 #]
+
+
+
+classifier = FindSClassifier()
+classifier.fit(data)
+assert classifier.predict([
+    Sky.CLOUDY, Temp.COLD, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.SAME
+]) == False
+
+assert classifier.predict([
+    Sky.SUNNY, Temp.WARM, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.SAME
+]) == True
+
+assert classifier.predict([
+    Sky.RAINY, Temp.WARM, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.SAME
+]) == False
+
+assert classifier.predict([
+    Sky.SUNNY, Temp.WARM, Humid.HIGH, Wind.NORMAL, Water.WARM, Forecast.SAME
+]) == True

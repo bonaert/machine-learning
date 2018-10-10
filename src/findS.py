@@ -15,10 +15,7 @@ class NoSolutionError(Exception):
 class LogicError(Exception):
     pass
 
-
-def hypothesIsCoherentWithExample(hypothesis, example):
-    assert len(hypothesis) == len(example) - 1
-    
+def getPrediction(hypothesis, example):
     prediction = Label.YES
     for hypothesisValue, exampleValue in zip(hypothesis, example):
         if hypothesisValue == Special.ANY:
@@ -26,9 +23,13 @@ def hypothesIsCoherentWithExample(hypothesis, example):
         elif hypothesisValue == Special.NONE or hypothesisValue != exampleValue:
             prediction = Label.NO
             break
-    
+
+    return prediction
+
+def hypothesIsCoherentWithExample(hypothesis, example):
+    assert len(hypothesis) == len(example) - 1
     label = example[-1]
-    return prediction == label
+    return getPrediction(hypothesis, example) == label
 
 def getNumFields(data):
     return len(data[0]) - 1
@@ -328,3 +329,18 @@ def createAllHypotheses(S, G):
 def fetchAllHypothesis(data):
     S, G = findSAndG(data)
     return createAllHypotheses(S, G)
+
+
+class FindSClassifier:
+    def fit(self, data):
+        self.hypotheses = fetchAllHypothesis(data)
+    
+    def predict(self, example):
+        positive, negative = 0, 0
+        for hypothesis in self.hypotheses:
+            if getPrediction(hypothesis, example) == Label.YES:
+                positive += 1
+            else:
+                negative += 1
+    
+        return positive >= negative
