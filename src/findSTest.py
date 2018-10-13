@@ -1,43 +1,11 @@
 from findS import *
 from unittest import TestCase
-from enum import Enum
-
-
-class Sky(Enum):
-    SUNNY = 0
-    CLOUDY = 1
-    RAINY = 2
-
-class Temp(Enum):
-    WARM = 0
-    COLD = 1
-
-class Humid(Enum):
-    NORMAL = 0
-    HIGH = 1
-
-class Wind(Enum):
-    STRONG = 0
-    NORMAL = 1
-
-class Water(Enum):
-    WARM = 0
-    COOL = 1
-
-class Forecast(Enum):
-    SAME = 0
-    CHANGE = 1
+from data import *
 
 assert getOtherValuesInEnum(Forecast.SAME) == [Forecast.CHANGE]
 assert getOtherValuesInEnum(Forecast.CHANGE) == [Forecast.SAME]
 assert getOtherValuesInEnum(Sky.CLOUDY) == [Sky.SUNNY, Sky.RAINY]
 
-data = [
-    [Sky.SUNNY, Temp.WARM, Humid.NORMAL, Wind.STRONG, Water.WARM, Forecast.SAME, Label.YES],
-    [Sky.SUNNY, Temp.WARM, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.SAME, Label.YES],
-    [Sky.RAINY, Temp.COLD, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.CHANGE, Label.NO],
-    [Sky.SUNNY, Temp.WARM, Humid.HIGH, Wind.STRONG, Water.COOL, Forecast.CHANGE, Label.YES],
-]
 
 RESTRICTIVE_HYPOTHESIS = [
     Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY
@@ -56,10 +24,10 @@ INTERMEDIATE_HYPOTHESIS = [
 
 ALL_HYPOTHESES = [RESTRICTIVE_HYPOTHESIS] + GENERAL_HYPOTHESIS + INTERMEDIATE_HYPOTHESIS
 
-restr = mostRestrictiveHypothesis(data)
+restr = mostRestrictiveHypothesis(simpleData)
 assert restr == RESTRICTIVE_HYPOTHESIS
         
-for example in data:
+for example in simpleData:
     assert hypothesIsCoherentWithExample(RESTRICTIVE_HYPOTHESIS, example)
 
 assert makeGeneralization([Temp.WARM, Wind.STRONG], [Temp.COLD, Wind.STRONG]) == [Special.ANY, Wind.STRONG]
@@ -147,11 +115,11 @@ assert not isMoreSpecific([Temp.WARM, Wind.NORMAL], [Temp.WARM, Wind.NORMAL])
 assert not isMoreSpecific([Temp.WARM, Wind.NORMAL], [Special.NONE, Special.ANY])
 
 
-S, G = findSAndG(data)
+S, G = findSAndG(simpleData)
 assert S == [[Sky.SUNNY, Temp.WARM, Special.ANY, Wind.STRONG, Special.ANY, Special.ANY]]
 assert G == [[Sky.SUNNY, Special.ANY, Special.ANY, Special.ANY, Special.ANY, Special.ANY], [Special.ANY, Temp.WARM, Special.ANY, Special.ANY, Special.ANY, Special.ANY]]
 
-sol = fetchAllHypothesis(data)
+sol = fetchAllHypothesis(simpleData)
 
 #for x in sol:
 #    print(x)
@@ -169,7 +137,7 @@ sol = fetchAllHypothesis(data)
 
 
 classifier = FindSClassifier()
-classifier.fit(data)
+classifier.fit(simpleData)
 assert classifier.predict([
     Sky.CLOUDY, Temp.COLD, Humid.HIGH, Wind.STRONG, Water.WARM, Forecast.SAME
 ]) == False
