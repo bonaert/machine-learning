@@ -11,3 +11,6 @@ class DecisionTreeTest(unittest.TestCase):
             self.assertEqual(datum[-1], tree.predict(datum))
 
 # TODO: add much better tests
+tree = DecisionTree()
+tree.fit(simpleData)
+tree.print()

@@ -15,7 +15,7 @@ def getEntropyFromCounts(counts):
     entropy = 0
     for count in counts:
         p = count / total
-        entropy += p * log2(p)
+        entropy -= p * log2(p)
     
     return entropy
 
@@ -24,17 +24,25 @@ class Node:
     pass
 
 class LeafNode(Node):
-    def __init__(self, parent, label):
+    def __init__(self, parent, value, label):
         self.label = label
         self.parent = parent
+        self.value = value
 
     def isLeaf(self) -> bool:
         return True
+    
+    def print(self, tabs=0):
+        enumName = self.value.__class__.__name__  # Sky
+        enumValue = str(self.value).split('.')[1] # Sky.Sunny -> Sunny
+        labelValue = str(self.label).split('.')[1]
+        print("%sColumn %d: %s = %s -> Label = %s" % ('| ' * tabs, self.parent.columnIndex, enumName, enumValue, self.label))
 
 class DecisionNode(Node):
-    def __init__(self, parent, data):
+    def __init__(self, parent, value, data):
         self.data = data
         self.parent = parent
+        self.value = value # TODO: find better name
         self.children = {}        
         self.columnIndex = None
     
@@ -133,13 +141,47 @@ class DecisionNode(Node):
                 continue
                 #raise Exception("No instances for attribute %s %s!" % (value.__class__, value))
             elif numLabels == 1: # Only one label
-                newNode = LeafNode(parent=self, label=childData[0][-1])
+                newNode = LeafNode(parent=self, value=value, label=childData[0][-1])
             else:
-                newNode = DecisionNode(parent=self, data=childData)
+                newNode = DecisionNode(parent=self, value=value, data=childData)
             
             self.children[value] = newNode
         
         return self.children.values()
+
+    def getLabelDistributions(self):
+        """
+        Returns a tuple with four elements:
+            - the number of data with Label=Yes
+            - the number of data with Label=No
+            - the percent of data with Label=Yes
+            - the percent of data with Label=No
+        
+        Example: (833, 167, 0.83, 0.17)
+        """
+        total = len(self.data)
+        plus = len([x for x in self.data if x[-1] == Label.YES])
+        minus = total - plus
+        percentPlus, percentMinus = plus / total, minus / total
+        return plus, minus, percentPlus, percentMinus
+    
+    def print(self, tabs=0):
+        plus, minus, percentPlus, percentMinus = self.getLabelDistributions()
+
+        if self.value is None:
+            # [833+, 167-] 0.83+ 0.17-
+            print("%s[%d+, %d-] %.2f+ %.2f-" % ('| ' * tabs, plus, minus, percentPlus, percentMinus))
+        else:
+            # Column 0: Sky = High [833+, 167-] 0.83+ 0.17-
+            enumName = self.value.__class__.__name__  # Sky
+            enumValue = str(self.value).split('.')[1] # Sky.Sunny -> Sunny
+            print("%sColumn %d: %s = %s  [%d+, %d-] %.2f+ %.2f-" % 
+                ('| ' * tabs, self.parent.columnIndex, enumName, enumValue, plus, minus, percentPlus, percentMinus)
+            )
+        
+        for child in self.children.values():
+            child.print(tabs + 1)
+
     
 
 class DecisionTree:
@@ -149,7 +191,7 @@ class DecisionTree:
         (with Yes/No) labels remain. We split each node so that it maximises information
         gain. The criterion used is entropy (e.g. as in information theory)
         """
-        self.tree = DecisionNode(parent=None, data=data)
+        self.tree = DecisionNode(parent=None, value=None, data=data)
         toSplit = [self.tree]
         while toSplit:
             currentNode = toSplit.pop()
@@ -200,6 +242,9 @@ class DecisionTree:
             node = node.goToAppropriateChild(example)
         
         return node.label
+    
+    def print(self):
+        self.tree.print()
     
 
 # TODO: add visualisation
