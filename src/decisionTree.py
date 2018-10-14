@@ -7,6 +7,7 @@ from constants import *
 def getEntropyFromCounts(counts):
     # Remove 0 counts
     counts = [count for count in counts if count > 0]
+    assert len(counts) > 0
     
     if len(counts) == 1: # Only one possible outcome
         return 0
@@ -36,7 +37,7 @@ class LeafNode(Node):
         enumName = self.value.__class__.__name__  # Sky
         enumValue = str(self.value).split('.')[1] # Sky.Sunny -> Sunny
         labelValue = str(self.label).split('.')[1]
-        print("%sColumn %d: %s = %s -> Label = %s" % ('| ' * tabs, self.parent.columnIndex, enumName, enumValue, self.label))
+        print("%sColumn %d: %s = %s -> Label = %s" % ('| ' * tabs, self.parent.columnIndex, enumName, enumValue, labelValue))
 
 class DecisionNode(Node):
     def __init__(self, parent, value, data):
